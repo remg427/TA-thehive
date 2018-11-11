@@ -1,0 +1,16 @@
+<setup>
+
+  <block title="(Optional) Define TheHive server parameters" endpoint="thehive/customendpoint" entity="thehivesetup">
+
+    <input field="thehive_url">
+      <label>TheHive API url:</label>
+      <type>text</type>
+    </input>
+
+    <input field="thehive_key" endpoint="thehive/customendpoint" entity="thehivesetup">
+      <label>API auth key - You should create an account with only the role create alerts</label>
+      <type>text</type>
+    </input>
+    
+  </block>
+</setup>
