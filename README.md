@@ -1,5 +1,5 @@
 # TA-thehive
-This add-on is designed to add alert actions on Splunk to create alerts in [The Hive](https://thehive-project.org/) alerts
+This add-on is designed to add alert action on Splunk to create alerts in [The Hive](https://thehive-project.org/)
 
 # Installation
 This app is designed to run on Splunk Search Head(s) on Linux plateforms
