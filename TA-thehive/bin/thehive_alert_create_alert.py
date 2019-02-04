@@ -6,12 +6,26 @@
 # Copyright: LGPLv3 (https://www.gnu.org/licenses/lgpl-3.0.txt)
 # Feel free to use the code, but please share the changes you've made
 
+#    autonomous-system
+#    domain
+#    file
+#    filename
+#    fqdn
+#    hash
+#    ip
+#    mail
+#    mail_subject
+#    other
+#    regexp
+#    registry
+#    uri_path
+#    url
+#    user-agent
+
 # most of the code here was based on the following example on splunk custom alert actions
 # http://docs.splunk.com/Documentation/Splunk/6.5.3/AdvancedDev/ModAlertsAdvancedExample
 
-import ConfigParser
 import csv
-import datetime
 import gzip
 import json
 import os
@@ -19,12 +33,12 @@ import requests
 import sys
 import time
 from splunk.clilib import cli_common as cli
-from requests.auth import HTTPBasicAuth
+#from requests.auth import HTTPBasicAuth
 import logging
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
-__version__    = "1.01"
+__version__    = "1.03"
 __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
@@ -33,30 +47,6 @@ def prepare_config(config, filename):
     config_args = {}
     # open thehive.conf
     thehiveconf = cli.getConfStanza('thehive','thehivesetup')
-    # get the thehive_url we need to connect to thehive
-    # this can be passed as params of the alert. Defaults to values set in thehive.conf  
-    # get specific thehive url and key if any (from alert configuration)
-    thehive_url = config.get('thehive_url')
-    thehive_key = config.get('thehive_key')   
-    if thehive_url and thehive_key:
-        thehive_url = str(thehive_url)
-        thehive_verifycert = int(config.get('thehive_verifycert', "0"))
-        if thehive_verifycert == 1:
-            thehive_verifycert = True
-        else:
-            thehive_verifycert = False
-    else: 
-        # get thehive settings stored in thehive.conf
-        thehive_url = str(thehiveconf.get('thehive_url'))
-        thehive_key = thehiveconf.get('thehive_key')
-        if thehiveconf.get('thehive_verifycert') == 1:
-            thehive_verifycert = True
-        else:
-            thehive_verifycert = False
-
-    # check and complement config
-    config_args['thehive_url'] = thehive_url
-    config_args['thehive_key'] = thehive_key
     # get proxy parameters if any
     http_proxy = thehiveconf.get('http_proxy', '')
     https_proxy = thehiveconf.get('https_proxy', '')
@@ -67,6 +57,49 @@ def prepare_config(config, filename):
         }
     else:
         config_args['proxies'] = {}
+    # get the thehive_url we need to connect to thehive
+    # this can be passed as params of the alert. Defaults to values set in thehive.conf  
+    # get specific thehive instance if any from alert configuration
+    thehive_instance = config.get('thehive_instance')
+    if thehive_instance:
+        logging.info("altenate thehive_instance %s", thehive_instance)
+
+        _SPLUNK_PATH = os.environ['SPLUNK_HOME']
+        thehive_instances = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_instances.csv'
+        found_instance = False
+        try:
+            with open(thehive_instances, 'rb') as file_object:  # open thehive_instances.csv if exists and load content.
+                csv_reader = csv.DictReader(file_object)
+                for row in csv_reader:
+                    if row['thehive_instance'] == thehive_instance:
+                        found_instance = True
+                        thehive_url = row['thehive_url']
+                        thehive_key = row['thehive_key']
+                        if row['thehive_verifycert'] == 'True':
+                            thehive_verifycert = True
+                        else:
+                            thehive_verifycert = False
+                        if row['thehive_use_proxy'] == 'False':
+                            config_args['proxies'] = {}
+        except IOError : # file thehive_instances.csv not readable
+            logging.error('file thehive_instances.csv not readable')
+        if found_instance is False:
+            logging.error('thehive_instance name %s not found', thehive_instance)
+    else: 
+        # get thehive settings stored in thehive.conf
+        thehive_url = str(thehiveconf.get('thehive_url'))
+        thehive_key = str(thehiveconf.get('thehive_key'))
+        if int(thehiveconf.get('thehive_verifycert')) == 1:
+            thehive_verifycert = True
+        else:
+            thehive_verifycert = False
+        if int(thehiveconf.get('thehive_use_proxy')) == 0:
+            config_args['proxies'] = {} 
+
+    # check and complement config
+    config_args['thehive_url'] = thehive_url
+    config_args['thehive_key'] = thehive_key
+    config_args['thehive_verifycert'] = thehive_verifycert   
 
     # Get numeric values from alert form
     config_args['tlp'] = int(config.get('tlp'))
@@ -102,7 +135,6 @@ def prepare_config(config, filename):
     else:
         config_args['description'] =  myDescription
     myTags = config.get('tags')
-    logging.info("myTags %s", myTags)
     if myTags in [None, '']:
         config_args['tags'] = []
     else:
@@ -111,7 +143,6 @@ def prepare_config(config, filename):
         for tag in tag_list:
             if tag not in tags:
                 tags.append(tag)
-        logging.info("split tags %s", tags)
         config_args['tags'] = tags
     
 
@@ -130,7 +161,6 @@ def create_alert(config, results):
     alertRef = 'SPK' + str(int(time.time()))
 
     for row in results:
-    
         # Splunk makes a bunch of dumb empty multivalue fields - we filter those out here 
         row = {key: value for key, value in row.iteritems() if not key.startswith("__mv_")}
 
@@ -141,47 +171,42 @@ def create_alert(config, results):
         else:
             sourceRef = alertRef
 
-        # check if attributes have been stored for this sourceRef. If yes, retrieve them to add new ones from this row
+        # check if artifacts have been stored for this sourceRef. If yes, retrieve them to add new ones from this row
         if sourceRef in alerts:
             alert = alerts[sourceRef]
-            attributes = alert["attributes"]
+            artifacts = list(alert["artifacts"])
         else:
             alert = {}
-            attributes = {} 
-
-        # attributes can be provided in two ways
-        # - either a table with columns type and value
-        # - or a table with one column per type and value in the cell (it can be empty for some rows)
-        # 
-        # they are collected and added to the dict in the format data:dataType
-        # using data as key avoids duplicate entries if some field values are common to several rows with the same sourceRef!
+            artifacts = [] 
         
         # now we take those KV pairs to add to dict 
         for key, value in row.iteritems():
             if value != "":
-                logging.debug("key %s value %s" % (key, value)) 
-                attributes[str(value)] = key
+                if ':' in key:
+                    dType=key.split(':',1)
+                    artifact=dict(
+                    dataType=str(dType[0]),
+                    data=str(value),
+                    message=str(dType[1])
+                    )
+                else:
+                    artifact=dict(
+                    dataType=str(key),
+                    data=str(value)
+                    )
+                logging.debug("new artifact is %s " % artifact)
+                if artifact not in artifacts: 
+                    artifacts.append(artifact)
     
-        if attributes:
-            alert['attributes'] = attributes
+        if artifacts:
+            alert['artifacts'] = list(artifacts)
             alerts[sourceRef] = alert
 
     # actually send the request to create the alert; fail gracefully
     try:
-
         # iterate in dict alerts to create alerts
-        for srcRef, attributes in alerts.items():
-            logging.debug("SourceRef is %s and attributes are %s" % (srcRef, attributes))
-
-            artifacts = []
-
-            # now we take those KV pairs and make a list-type of dicts 
-            for value, dType in attributes['attributes'].items():
-                artifacts.append(dict(
-                    dataType = dType,
-                    data = value,
-                    message = "%s observed in this alert" % dType
-                ))
+        for srcRef, artifact_list in alerts.items():
+            logging.debug("SourceRef is %s and attributes are %s" % (srcRef,  artifact_list))
 
             payload = json.dumps(dict(
                 title = config['title'],
@@ -190,7 +215,7 @@ def create_alert(config, results):
                 severity = config['severity'],
                 tlp = config['tlp'],
                 type = config['type'],
-                artifacts = artifacts,
+                artifacts = artifact_list['artifacts'],
                 source = config['source'],
                 caseTemplate = config['caseTemplate'],
                 sourceRef = srcRef
@@ -204,27 +229,28 @@ def create_alert(config, results):
             headers['Authorization'] = 'Bearer ' + auth
             headers['Accept'] = 'application/json'
 
-            print >> sys.stderr, 'DEBUG Calling url="%s" with headers %s and payload=%s' % (url, headers, payload) 
+            logging.debug('DEBUG Calling url="%s" with headers %s', url, headers) 
+            logging.debug('DEBUG payload=%s', payload) 
             # post alert
             response = requests.post(url, headers=headers, data=payload, verify=False, proxies=config['proxies'])
-            print >> sys.stderr, "INFO theHive server responded with HTTP status %s" % response.status_code
+            logging.info("INFO theHive server responded with HTTP status %s", response.status_code)
             # check if status is anything other than 200; throw an exception if it is
             response.raise_for_status()
             # response is 200 by this point or we would have thrown an exception
-            print >> sys.stderr, "DEBUG theHive server response: %s" % response.json()
+            logging.debug("theHive server response: %s", response.json())
     
     # somehow we got a bad response code from thehive
     except requests.exceptions.HTTPError as e:
-        print >> sys.stderr, "ERROR theHive server returned following error: %s" % e
+        logging.error("theHive server returned following error: %s", e)
     # some other request error occurred
     except requests.exceptions.RequestException as e:
-        print >> sys.stderr, "ERROR Error creating alert: %s" % e
+        logging.error("Error creating alert: %s", e)
         
     
 if __name__ == "__main__":
     # set up logging suitable for splunkd consumption
     logging.root
-    logging.root.setLevel(logging.DEBUG)    
+    logging.root.setLevel(logging.INFO)    
     # make sure we have the right number of arguments - more than 1; and first argument is "--execute"
     if len(sys.argv) > 1 and sys.argv[1] == "--execute":
         # read the payload from stdin as a json string
@@ -245,6 +271,7 @@ if __name__ == "__main__":
                     # at least, in theory
                     Reader = csv.DictReader(file)
                     logging.debug('Reader is %s', str(Reader))
+                    logging.debug("Creating alert with config %s", json.dumps(configuration))
                     Config = prepare_config(configuration,filename)
                     logging.debug('Config is %s', json.dumps(Config))
                     # make the alert with predefined function; fail gracefully
@@ -254,13 +281,13 @@ if __name__ == "__main__":
                 sys.exit(0)
             # something went wrong with opening the results file
             except IOError as e:
-                print >> sys.stderr, "FATAL Results file exists but could not be opened/read"
+                logging.error("FATAL Results file exists but could not be opened/read")
                 sys.exit(3)
         # somehow the results file does not exist
         else:
-            print >> sys.stderr, "FATAL Results file does not exist"
+            logging.error("FATAL Results file does not exist")
             sys.exit(2)
     # somehow we received the wrong number of arguments
     else:
-        print >> sys.stderr, "FATAL Unsupported execution mode (expected --execute flag)"
+        logging.error("FATAL Unsupported execution mode (expected --execute flag)")
         sys.exit(1)

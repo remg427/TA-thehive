@@ -99,36 +99,15 @@
         </div>
     </div> 
     <div class="control-group">
-        <h4>TheHive API parameters (optional if they have been defined in general setup)</h4>
+        <h4>TheHive alternate instance (leave blank for using the default one)</h4>
     </div>
     <div class="control-group">
-        <label class="control-label" for="thehive_alert_create_alert_URL">URL</label>
-
+        <label class="control-label" for="thehive_alert_create_alert_thehive_instance">TheHive instance</label>
         <div class="controls">
-            <input type="text" name="action.thehive_alert_create_alert.param.thehive_url" id="thehive_alert_create_alert_thehive_url" />
+            <input type="text" name="action.thehive_alert_create_alert.param.thehive_instance" id="thehive_alert_create_alert_thehive_instance" />
             <span class="help-block">
-              The URL to submit alerts to e.g. http://hive.example.com/api/alert.
+              Alternate instance.
             </span>
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label" for="thehive_alert_create_alert_Key">API KEY</label>
-
-        <div class="controls">
-            <input type="text" name="action.thehive_alert_create_alert.param.thehive_key" id="thehive_alert_create_alert_thehive_key" />
-            <span class="help-block">
-              TH API KEY 
-            </span>
-        </div>
-    </div>
-    <div class="control-group">
-        <label class="control-label" for="thehive_alert_create_event_thehive_verifycert">Check SSL cert</label>
-
-        <div class="controls">
-            <input type="checkbox" name="action.thehive_alert_create_event.param.thehive_verifycert" id="thehive_alert_create_event_thehive_verifycert"/>
-            <span class="help-block">
-                Check SSL certificate of thehive server.
-            </span>
-        </div>
-    </div>    
 </form>
