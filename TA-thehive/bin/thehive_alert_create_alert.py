@@ -62,7 +62,7 @@ def prepare_config(config, filename):
     # get specific thehive instance if any from alert configuration
     thehive_instance = config.get('thehive_instance')
     if thehive_instance:
-        logging.info("altenate thehive_instance %s", thehive_instance)
+        logging.info("alternate thehive_instance %s", thehive_instance)
 
         _SPLUNK_PATH = os.environ['SPLUNK_HOME']
         thehive_instances = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_instances.csv'
@@ -192,7 +192,8 @@ def create_alert(config, results):
                 else:
                     artifact=dict(
                     dataType=str(key),
-                    data=str(value)
+                    data=str(value),
+                    message="observed"
                     )
                 logging.debug("new artifact is %s " % artifact)
                 if artifact not in artifacts: 
