@@ -1,5 +1,4 @@
 <setup>
-
   <block title="(Optional) Define TheHive server parameters" endpoint="thehive/customendpoint" entity="thehivesetup">
     <input field="thehive_url">
       <label>TheHive API url:</label>
@@ -13,6 +12,10 @@
       <label>Check SSL certificate of TheHive server</label>
       <type>bool</type>
     </input>  
+    <input field="thehive_use_proxy" endpoint="thehive/customendpoint" entity="thehivesetup">
+      <label>Use proxy for this instance</label>
+      <type>bool</type>
+    </input>  
   </block>
   <block title="(Optional) proxy parameters if needed - leave empty if no proxy required. Use the syntax http://user:pass@proxyhost:port/" endpoint="thehive/customendpoint" entity="thehivesetup">
     <input field="http_proxy">
@@ -24,5 +27,4 @@
       <type>text</type>
     </input>
   </block>
-
 </setup>
