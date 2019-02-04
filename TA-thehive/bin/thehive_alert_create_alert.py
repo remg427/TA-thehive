@@ -73,12 +73,12 @@ def prepare_config(config, filename):
     config_args['severity'] = int(config.get('severity'))
 
     # Get string values from alert form
-    myTemplate = config.get('caseTemplate', "default")
+    myTemplate = config.get('caseTemplate')
     if myTemplate in [None, '']:
         config_args['caseTemplate'] = "default"
     else:
         config_args['caseTemplate'] = myTemplate
-    myType = config.get('type', "alert")
+    myType = config.get('type')
     if myType in [None, '']:
         config_args['type'] = "alert"
     else:
@@ -156,26 +156,11 @@ def create_alert(config, results):
         # they are collected and added to the dict in the format data:dataType
         # using data as key avoids duplicate entries if some field values are common to several rows with the same sourceRef!
         
-        # check if row has columns type and value
-        if 'type' in row and 'value' in row:
-            mykey   = str(row.pop('type'))
-            myvalue = str(row.pop('value'))
-            if myvalue != "":
-                print >> sys.stderr, "DEBUG key %s value %s" % (mykey, myvalue) 
-                attributes[myvalue] = mykey
-                # now we take the others KV pairs if any to add to dict 
-                for key, value in row.iteritems():
-                    if value != "":
-                        print >> sys.stderr, "DEBUG key %s value %s" % (key, value) 
-                        attributes[str(value)] = key
-        
-        # if there is one column per type in results
-        else:
         # now we take those KV pairs to add to dict 
-            for key, value in row.iteritems():
-                if value != "":
-                    print >> sys.stderr, "DEBUG key %s value %s" % (key, value) 
-                    attributes[str(value)] = key
+        for key, value in row.iteritems():
+            if value != "":
+                logging.debug("key %s value %s" % (key, value)) 
+                attributes[str(value)] = key
     
         if attributes:
             alert['attributes'] = attributes
@@ -186,7 +171,7 @@ def create_alert(config, results):
 
         # iterate in dict alerts to create alerts
         for srcRef, attributes in alerts.items():
-            print >> sys.stderr, "DEBUG sourceRef is %s and attributes are %s" % (srcRef, attributes)
+            logging.debug("SourceRef is %s and attributes are %s" % (srcRef, attributes))
 
             artifacts = []
 
@@ -201,14 +186,14 @@ def create_alert(config, results):
             payload = json.dumps(dict(
                 title = config['title'],
                 description = config['description'],
-#                tags = config['tags'],
+                tags = config['tags'],
                 severity = config['severity'],
                 tlp = config['tlp'],
                 type = config['type'],
                 artifacts = artifacts,
                 source = config['source'],
                 caseTemplate = config['caseTemplate'],
-                sourceRef = srcRef # I like to use eval id=md5(_raw) 
+                sourceRef = srcRef
             ))
 
             # set proper headers
