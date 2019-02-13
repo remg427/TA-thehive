@@ -156,7 +156,7 @@ def create_alert(config, results):
     # iterate through each row, cleaning multivalue fields and then adding the attributes under same alert key
     # this builds the dict alerts
     # https://github.com/TheHive-Project/TheHiveDocs/tree/master/api
-
+    dataType = ['autonomous-system', 'domain', 'filename', 'fqdn', 'hash', 'ip', 'mail', 'mail_subject', 'other', 'regexp', 'registry', 'uri_path', 'url', 'user-agent']
     alerts = {}
     alertRef = 'SPK' + str(int(time.time()))
 
@@ -180,24 +180,45 @@ def create_alert(config, results):
             artifacts = [] 
         
         # now we take those KV pairs to add to dict 
+        # now we take those KV pairs to add to dict 
         for key, value in row.iteritems():
-            if value != "":
-                if ':' in key:
-                    dType=key.split(':',1)
-                    artifact=dict(
-                    dataType=str(dType[0]),
-                    data=str(value),
-                    message=str(dType[1])
-                    )
+            if ':' in key:
+                dType=key.split(':',1)
+                cKey=str(dType[0])
+                cMsg='msg: ' + str(dType[1])
+                if cKey not in dataType:
+                    cKey='other'
+                    cMsg='msg: ' + str(key)
+            else:
+                if key in dataType:
+                    cKey=key
+                    cMsg="empty msg"
                 else:
+                    cKey='other'
+                    cMsg='msg: ' + str(key)                   
+            if '\n' in value: # was a multivalue field
+                logging.debug('value is not a simple string %s', value)
+                values = value.split('\n')
+                for val in values:
+                    if val != "":
+                        artifact=dict(
+                        dataType=cKey,
+                        data=str(val),
+                        message=cMsg
+                        )
+                        logging.debug("new artifact is %s " % artifact)
+                        if artifact not in artifacts: 
+                            artifacts.append(artifact)
+            else:
+                if value != "":
                     artifact=dict(
-                    dataType=str(key),
+                    dataType=cKey,
                     data=str(value),
-                    message="observed"
+                    message=cMsg
                     )
-                logging.debug("new artifact is %s " % artifact)
-                if artifact not in artifacts: 
-                    artifacts.append(artifact)
+                    logging.debug("new artifact is %s " % artifact)
+                    if artifact not in artifacts: 
+                        artifacts.append(artifact)
     
         if artifacts:
             alert['artifacts'] = list(artifacts)
@@ -242,16 +263,12 @@ def create_alert(config, results):
     
     # somehow we got a bad response code from thehive
     except requests.exceptions.HTTPError as e:
-        logging.error("theHive server returned following error: %s", e)
-    # some other request error occurred
-    except requests.exceptions.RequestException as e:
-        logging.error("Error creating alert: %s", e)
-        
+        logging.error("theHive server returned following error: %s", e)        
     
 if __name__ == "__main__":
     # set up logging suitable for splunkd consumption
     logging.root
-    logging.root.setLevel(logging.INFO)    
+    logging.root.setLevel(logging.ERROR)    
     # make sure we have the right number of arguments - more than 1; and first argument is "--execute"
     if len(sys.argv) > 1 and sys.argv[1] == "--execute":
         # read the payload from stdin as a json string
