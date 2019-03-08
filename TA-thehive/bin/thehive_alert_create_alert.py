@@ -171,6 +171,12 @@ def create_alert(config, results):
         else:
             sourceRef = alertRef
 
+        # check if the field th_msg exists and strip it from the row. The value will be used as message attached to artifacts
+        if 'th_msg' in row:
+            artifactMessage = str(row.pop("th_msg")) # grabs that field's value and assigns it to  
+        else:
+            artifactMessage = ''
+
         # check if artifacts have been stored for this sourceRef. If yes, retrieve them to add new ones from this row
         if sourceRef in alerts:
             alert = alerts[sourceRef]
@@ -180,37 +186,35 @@ def create_alert(config, results):
             artifacts = [] 
         
         # now we take those KV pairs to add to dict 
-        # now we take those KV pairs to add to dict 
         for key, value in row.iteritems():
-            if ':' in key:
-                dType=key.split(':',1)
-                cKey=str(dType[0])
-                cMsg='msg: ' + str(dType[1])
-                if cKey not in dataType:
-                    cKey='other'
-                    cMsg='msg: ' + str(key)
-            else:
-                if key in dataType:
+            if value != "":
+                if ':' in key:
+                    dType=key.split(':',1)
+                    cKey=str(dType[0])
+                    cMsg=artifactMessage + '&msg: ' + str(dType[1])
+                    if cKey not in dataType:
+                        cKey='other'
+                        cMsg=cMsg + ' - type: ' + str(key)
+                elif key in dataType:
                     cKey=key
-                    cMsg="empty msg"
+                    cMsg=artifactMessage
                 else:
                     cKey='other'
-                    cMsg='msg: ' + str(key)                   
-            if '\n' in value: # was a multivalue field
-                logging.debug('value is not a simple string %s', value)
-                values = value.split('\n')
-                for val in values:
-                    if val != "":
-                        artifact=dict(
-                        dataType=cKey,
-                        data=str(val),
-                        message=cMsg
-                        )
-                        logging.debug("new artifact is %s " % artifact)
-                        if artifact not in artifacts: 
-                            artifacts.append(artifact)
-            else:
-                if value != "":
+                    cMsg=artifactMessage + ' - type: ' + str(key)                   
+                if '\n' in value: # was a multivalue field
+                    logging.debug('value is not a simple string %s', value)
+                    values = value.split('\n')
+                    for val in values:
+                        if val != "":
+                            artifact=dict(
+                            dataType=cKey,
+                            data=str(val),
+                            message=cMsg
+                            )
+                            logging.debug("new artifact is %s " % artifact)
+                            if artifact not in artifacts: 
+                                artifacts.append(artifact)
+                else:
                     artifact=dict(
                     dataType=cKey,
                     data=str(value),
