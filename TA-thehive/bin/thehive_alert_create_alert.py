@@ -156,7 +156,19 @@ def create_alert(config, results):
     # iterate through each row, cleaning multivalue fields and then adding the attributes under same alert key
     # this builds the dict alerts
     # https://github.com/TheHive-Project/TheHiveDocs/tree/master/api
-    dataType = ['autonomous-system', 'domain', 'filename', 'fqdn', 'hash', 'ip', 'mail', 'mail_subject', 'other', 'regexp', 'registry', 'uri_path', 'url', 'user-agent']
+    dataType = []
+    _SPLUNK_PATH = os.environ['SPLUNK_HOME']
+    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_datatypes.csv'
+    try:
+        with open(thehive_datatypes, 'rb') as file_object:  # open thehive_datatypes.csv if exists and load content.
+            csv_reader = csv.DictReader(file_object)
+            for row in csv_reader:
+                if 'observable' in row:
+                    dataType.append(row['observable'])
+    except IOError : # file thehive_instances.csv not readable
+        logging.info('file thehive_datatypes.csv not readable')
+    if not dataType:
+        dataType = ['autonomous-system', 'domain', 'filename', 'fqdn', 'hash', 'ip', 'mail', 'mail_subject', 'other', 'regexp', 'registry', 'uri_path', 'url', 'user-agent']
     alerts = {}
     alertRef = 'SPK' + str(int(time.time()))
 

@@ -27,7 +27,7 @@ Description:  This skeleton python script handles the parameters in the configur
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
-__version__    = "1.03"
+__version__    = "1.0.7"
 __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
@@ -38,7 +38,7 @@ class ConfigApp(admin.MConfigHandler):
   '''
   def setup(self):
     if self.requestedAction == admin.ACTION_EDIT:
-      for arg in ['thehive_url', 'thehive_key', 'thehive_verifycert', 'thehive_use_proxy', 'http_proxy', 'https_proxy']:
+      for arg in ['thehive_url', 'thehive_key', 'thehive_verifycert','client_use_cert', 'client_cert_full_path', 'thehive_use_proxy', 'http_proxy', 'https_proxy']:
         self.supportedArgs.addOptArg(arg)
 
   '''
@@ -62,12 +62,12 @@ class ConfigApp(admin.MConfigHandler):
     if None != confDict:
       for stanza, settings in confDict.items():
         for key, val in settings.items():
-          if key in [ 'thehive_use_proxy','thehive_verifycert']:
+          if key in [ 'thehive_use_proxy','client_use_cert', 'thehive_verifycert']:
             if int(val) == 1:
               val = '1'
             else:
               val = '0'
-          if key in ['thehive_url', 'thehive_key', 'http_proxy', 'https_proxy'] and val in [None, '']:
+          if key in ['thehive_url', 'thehive_key', 'client_cert_full_path', 'http_proxy', 'https_proxy'] and val in [None, '']:
             val = ''
           confInfo[stanza].append(key, val)
 
@@ -86,6 +86,12 @@ class ConfigApp(admin.MConfigHandler):
     else:
       self.callerArgs.data['thehive_verifycert'][0] = '0'
       thehive_verifycert = False
+    if int(self.callerArgs.data['client_use_cert'][0]) == 1:
+      self.callerArgs.data['client_use_cert'][0] = '1'
+      client_use_cert = True
+    else:
+      self.callerArgs.data['client_use_cert'][0] = '0'
+      client_use_cert = False
     if int(self.callerArgs.data['thehive_use_proxy'][0]) == 1:
       self.callerArgs.data['thehive_use_proxy'][0] = '1'
       thehive_use_proxy = True
@@ -96,6 +102,8 @@ class ConfigApp(admin.MConfigHandler):
       self.callerArgs.data['thehive_url'][0] = ''
     if self.callerArgs.data['thehive_key'][0] in [None, '']:
       self.callerArgs.data['thehive_key'][0] = ''
+    if self.callerArgs.data['client_cert_full_path'][0] in [None, '']:
+      self.callerArgs.data['client_cert_full_path'][0] = ''
     if self.callerArgs.data['http_proxy'][0] in [None, '']:
       self.callerArgs.data['http_proxy'][0] = ''
     if self.callerArgs.data['https_proxy'][0] in [None, '']:
@@ -114,15 +122,21 @@ class ConfigApp(admin.MConfigHandler):
         with open(thehive_instances, 'rb') as file_object:  # open thehive_instances.csv if exists and load content.
             csv_reader = csv.reader(file_object)
             header_row = next(csv_reader)
+            extend_thehive_instances = False
+            if 'client_use_cert' not in header_row:
+              header_row = ['thehive_instance','thehive_url','thehive_key','thehive_verifycert','thehive_use_proxy','description','client_use_cert','client_cert_full_path']
+              extend_thehive_instances = True
             instances = []
             for row in csv_reader:
               if 'default' in row:
-                instances.append(['default', self.callerArgs.data['thehive_url'][0], self.callerArgs.data['thehive_key'][0], thehive_verifycert, thehive_use_proxy, 'default TheHive instance'])
+                instances.append(['default', self.callerArgs.data['thehive_url'][0], self.callerArgs.data['thehive_key'][0], thehive_verifycert, thehive_use_proxy, 'default TheHive instance', client_use_cert, self.callerArgs.data['client_cert_full_path'][0]])
               else:
+                if extend_thehive_instances is True:
+                  row.extend((False,''))                
                 instances.append(row)
     except IOError : # file thehive_instances.csv doesn't exists so create empty instances
-        header_row = ['thehive_instance','thehive_url','thehive_key','thehive_verifycert','thehive_use_proxy','description']
-        instance = ['default', self.callerArgs.data['thehive_url'][0], self.callerArgs.data['thehive_key'][0], thehive_verifycert, thehive_use_proxy, 'default TheHive instance']
+        header_row = ['thehive_instance','thehive_url','thehive_key','thehive_verifycert','thehive_use_proxy','description','client_use_cert','client_cert_full_path']
+        instance = ['default', self.callerArgs.data['thehive_url'][0], self.callerArgs.data['thehive_key'][0], thehive_verifycert, thehive_use_proxy, 'default TheHive instance', client_use_cert, self.callerArgs.data['client_cert_full_path'][0]]
         instances = []
         instances.append(instance)
 
