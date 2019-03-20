@@ -150,5 +150,36 @@ class ConfigApp(admin.MConfigHandler):
     except IOError : # file thehive_instances.csv doesn't exists so create empty instances
       logging.error("FATAL %s could not be opened in write mode", thehive_instances)
 
+    # if it does not exist, create thehive_observables.csv
+    _SPLUNK_PATH = os.environ['SPLUNK_HOME']
+    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_datatypes.csv'
+    if not os.path.exists(thehive_datatypes):
+      # create the file
+      observables = [
+        ['observable','datatype','regex','description'],
+        ['autonomous-system','autonomous-system','',''],
+        ['domain','domain','',''],
+        ['filename','filename','',''],
+        ['fqdn','fqdn','',''],
+        ['hash','hash','',''],
+        ['ip','ip','',''],
+        ['mail','mail','',''],
+        ['mail_subject','mail_subject','',''],
+        ['other','other','',''],
+        ['regexp','regexp','',''],
+        ['registry','registry','',''],
+        ['uri_path','uri_path','',''],
+        ['url','url','',''],
+        ['user-agent','user-agent','','']
+      ]
+      try:
+          with open(thehive_datatypes, 'wb') as file_object:  # open thehive_instances.csv if exists and load content.
+              csv_writer = csv.writer(file_object, delimiter=',')
+              for observable in observables:
+                csv_writer.writerow(observable)
+      except IOError : # file thehive_instances.csv doesn't exists so create empty instances
+        logging.error("FATAL %s could not be opened in write mode", thehive_instances)
+
+
 # initialize the handler
 admin.init(ConfigApp, admin.CONTEXT_NONE)

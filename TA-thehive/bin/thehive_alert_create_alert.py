@@ -81,6 +81,11 @@ def prepare_config(config, filename):
                             thehive_verifycert = False
                         if row['thehive_use_proxy'] == 'False':
                             config_args['proxies'] = {}
+                        # get client cert parameters
+                        if row['client_use_cert'] == 'True':
+                            config_args['client_cert_full_path'] = row['client_cert_full_path']
+                        else:
+                            config_args['client_cert_full_path'] = None                            
         except IOError : # file thehive_instances.csv not readable
             logging.error('file thehive_instances.csv not readable')
         if found_instance is False:
@@ -95,6 +100,11 @@ def prepare_config(config, filename):
             thehive_verifycert = False
         if int(thehiveconf.get('thehive_use_proxy')) == 0:
             config_args['proxies'] = {} 
+        # get client cert parameters
+        if int(thehiveconf.get('client_use_cert')) == 1:
+            config_args['client_cert_full_path'] = thehiveconf.get('client_cert_full_path')
+        else:
+            config_args['client_cert_full_path'] = None
 
     # check and complement config
     config_args['thehive_url'] = thehive_url
@@ -262,6 +272,8 @@ def create_alert(config, results):
             # set proper headers
             url  = config['thehive_url']
             auth = config['thehive_key']
+            # client cert file
+            client_cert = config['client_cert_full_path']
 
             headers = {'Content-type': 'application/json'}
             headers['Authorization'] = 'Bearer ' + auth
@@ -270,7 +282,7 @@ def create_alert(config, results):
             logging.debug('DEBUG Calling url="%s" with headers %s', url, headers) 
             logging.debug('DEBUG payload=%s', payload) 
             # post alert
-            response = requests.post(url, headers=headers, data=payload, verify=False, proxies=config['proxies'])
+            response = requests.post(url, headers=headers, data=payload, verify=False, cert=client_cert, proxies=config['proxies'])
             logging.info("INFO theHive server responded with HTTP status %s", response.status_code)
             # check if status is anything other than 200; throw an exception if it is
             response.raise_for_status()
