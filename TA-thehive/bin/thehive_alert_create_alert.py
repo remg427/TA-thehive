@@ -182,6 +182,7 @@ def create_alert(config, results):
     alerts = {}
     alertRef = 'SPK' + str(int(time.time()))
 
+    description = config['description']
     for row in results:
         # Splunk makes a bunch of dumb empty multivalue fields - we filter those out here 
         row = {key: value for key, value in row.iteritems() if not key.startswith("__mv_")}
@@ -197,8 +198,8 @@ def create_alert(config, results):
         if config['description'] in row:
             id = config['description']
             newDescription = str(row.pop(id)) # grabs that field's value 
-            if newDescription is not '':
-                config['description'] = newDescription
+            if newDescription not in [None, '']:
+                description = newDescription
  
         # check if the field th_msg exists and strip it from the row. The value will be used as message attached to artifacts
         if 'th_msg' in row:
@@ -265,7 +266,7 @@ def create_alert(config, results):
 
             payload = json.dumps(dict(
                 title = config['title'],
-                description = config['description'],
+                description = description,
                 tags = config['tags'],
                 severity = config['severity'],
                 tlp = config['tlp'],
