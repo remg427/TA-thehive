@@ -38,7 +38,7 @@ import logging
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
-__version__    = "1.03"
+__version__    = "1.09"
 __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
@@ -193,6 +193,13 @@ def create_alert(config, results):
         else:
             sourceRef = alertRef
 
+        # check if description contains a field name instead of a string. if yes, strip it from the row and assign value to description
+        if config['description'] in row:
+            id = config['description']
+            newDescription = str(row.pop(id)) # grabs that field's value 
+            if newDescription is not '':
+                config['description'] = newDescription
+ 
         # check if the field th_msg exists and strip it from the row. The value will be used as message attached to artifacts
         if 'th_msg' in row:
             artifactMessage = str(row.pop("th_msg")) # grabs that field's value and assigns it to  
