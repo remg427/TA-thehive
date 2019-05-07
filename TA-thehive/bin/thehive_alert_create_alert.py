@@ -200,6 +200,13 @@ def create_alert(config, results):
             newDescription = str(row.pop(id)) # grabs that field's value 
             if newDescription not in [None, '']:
                 description = newDescription
+
+        # check if title contains a field name instead of a string. if yes, strip it from the row and assign value to title
+        if config['title'] in row:
+            id = config['title']
+            newTitle = str(row.pop(id)) # grabs that field's value 
+            if newTitle not in [None, '']:
+                title = newTitle
  
         # check if the field th_msg exists and strip it from the row. The value will be used as message attached to artifacts
         if 'th_msg' in row:
