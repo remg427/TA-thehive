@@ -38,7 +38,7 @@ import logging
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
-__version__    = "1.09"
+__version__    = "1.0.10"
 __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
@@ -182,8 +182,10 @@ def create_alert(config, results):
     alerts = {}
     alertRef = 'SPK' + str(int(time.time()))
 
-    description = config['description']
-    title = config['title']
+    description = dict()
+    title = dict()
+    description[alertRef] = config['description']
+    title[alertRef]       = config['title']
     for row in results:
         # Splunk makes a bunch of dumb empty multivalue fields - we filter those out here 
         row = {key: value for key, value in row.iteritems() if not key.startswith("__mv_")}
@@ -200,14 +202,14 @@ def create_alert(config, results):
             id = config['description']
             newDescription = str(row.pop(id)) # grabs that field's value 
             if newDescription not in [None, '']:
-                description = newDescription
+                description[sourceRef] = newDescription
 
         # check if title contains a field name instead of a string. if yes, strip it from the row and assign value to title
         if config['title'] in row:
             id = config['title']
             newTitle = str(row.pop(id)) # grabs that field's value 
             if newTitle not in [None, '']:
-                title = newTitle
+                title[sourceRef] = newTitle
  
         # check if the field th_msg exists and strip it from the row. The value will be used as message attached to artifacts
         if 'th_msg' in row:
@@ -273,8 +275,8 @@ def create_alert(config, results):
             logging.debug("SourceRef is %s and attributes are %s" % (srcRef,  artifact_list))
 
             payload = json.dumps(dict(
-                title = title,
-                description = description,
+                title = title[srcRef],
+                description = description[srcRef],
                 tags = config['tags'],
                 severity = config['severity'],
                 tlp = config['tlp'],
