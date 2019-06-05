@@ -1,3 +1,0 @@
-Edit file 'thehive_instances.csv' to add alternate instannces
-the first line must be:
-thehive_instance,thehive_url,thehive_key,thehive_verifycert,thehive_use_proxy,description
