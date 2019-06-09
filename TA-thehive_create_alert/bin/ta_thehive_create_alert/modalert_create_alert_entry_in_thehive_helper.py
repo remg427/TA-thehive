@@ -45,108 +45,99 @@ __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
 
-def prepare_config(config, filename):
-    config_args = {}
-    # open thehive.conf
-    thehiveconf = cli.getConfStanza('thehive','thehivesetup')
-    # get proxy parameters if any
-    http_proxy = thehiveconf.get('http_proxy', '')
-    https_proxy = thehiveconf.get('https_proxy', '')
-    if http_proxy != '' and https_proxy != '':
-        config_args['proxies'] = {
-            "http": http_proxy,
-            "https": https_proxy
-        }
+def prepare_alert_config(helper):
+    config_args = dict()
+    # get MISP instance to be used
+    th_instance = helper.get_param("th_instance")
+    stanza_name   = 'connector_to_thehive_instance://' + th_instance
+    helper.log_info("stanza_name={}".format(stanza_name))
+    # get MISP instance parameters
+    # open local/inputs.conf
+    _SPLUNK_PATH = os.environ['SPLUNK_HOME']
+    app_name     = "TA-thehive_create_alert"
+    inputs_conf_file = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + app_name + os.sep + 'local' + os.sep + 'inputs.conf'
+    if os.path.exists(inputs_conf_file):
+        inputsConf = cli.readConfFile(inputs_conf_file)
+        for name, content in inputsConf.items():
+            if stanza_name in name:
+                thehiveconf = content
+                helper.log_info(json.dumps(thehiveconf))
+        if not thehiveconf:
+            helper.log_error("local/inputs.conf does not contain settings for stanza: {}".format(stanza_name)) 
     else:
-        config_args['proxies'] = {}
-    # get the thehive_url we need to connect to thehive
-    # this can be passed as params of the alert. Defaults to values set in thehive.conf  
-    # get specific thehive instance if any from alert configuration
-    thehive_instance = config.get('thehive_instance')
-    if thehive_instance:
-        logging.info("alternate thehive_instance %s", thehive_instance)
+        helper.log_error("local/inputs.conf does not exist. Please configure misp instances first.") 
+    # get clear version of thehive_key
+    # get session key
+    sessionKey = helper.settings['session_key']
+    splunkService = client.connect(token=sessionKey)
+    storage_passwords = splunkService.storage_passwords
+    config_args['thehive_key'] = None
+    for credential in storage_passwords:
+        usercreds = {'username':credential.content.get('username'),'password':credential.content.get('clear_password')}
+        if th_instance in credential.content.get('username') and 'thehive_key' in credential.content.get('clear_password'):
+            th_instance_key = json.loads(credential.content.get('clear_password'))
+            config_args['thehive_key'] = str(th_instance_key['thehive_key'])
+            helper.log_info('thehive_key found for instance  {}'.format(th_instance))
+    if config_args['thehive_key'] is None:
+        helper.log_error('thehive_key NOT found for instance  {}'.format(th_instance))         
 
-        _SPLUNK_PATH = os.environ['SPLUNK_HOME']
-        thehive_instances = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_instances.csv'
-        found_instance = False
-        try:
-            with open(thehive_instances, 'rb') as file_object:  # open thehive_instances.csv if exists and load content.
-                csv_reader = csv.DictReader(file_object)
-                for row in csv_reader:
-                    if row['thehive_instance'] == thehive_instance:
-                        found_instance = True
-                        thehive_url = row['thehive_url']
-                        thehive_key = row['thehive_key']
-                        if row['thehive_verifycert'] == 'True':
-                            thehive_verifycert = True
-                        else:
-                            thehive_verifycert = False
-                        if row['thehive_use_proxy'] == 'False':
-                            config_args['proxies'] = {}
-                        # get client cert parameters
-                        if row['client_use_cert'] == 'True':
-                            config_args['client_cert_full_path'] = row['client_cert_full_path']
-                        else:
-                            config_args['client_cert_full_path'] = None                            
-        except IOError : # file thehive_instances.csv not readable
-            logging.error('file thehive_instances.csv not readable')
-        if found_instance is False:
-            logging.error('thehive_instance name %s not found', thehive_instance)
-    else: 
-        # get thehive settings stored in thehive.conf
-        thehive_url = str(thehiveconf.get('thehive_url'))
-        thehive_key = str(thehiveconf.get('thehive_key'))
-        if int(thehiveconf.get('thehive_verifycert')) == 1:
-            thehive_verifycert = True
-        else:
-            thehive_verifycert = False
-        if int(thehiveconf.get('thehive_use_proxy')) == 0:
-            config_args['proxies'] = {} 
-        # get client cert parameters
-        if int(thehiveconf.get('client_use_cert')) == 1:
-            config_args['client_cert_full_path'] = thehiveconf.get('client_cert_full_path')
-        else:
-            config_args['client_cert_full_path'] = None
-
-    # check and complement config
-    config_args['thehive_url'] = thehive_url
-    config_args['thehive_key'] = thehive_key
-    config_args['thehive_verifycert'] = thehive_verifycert   
-
-    # Get numeric values from alert form
-    config_args['tlp'] = int(config.get('tlp'))
-    config_args['severity'] = int(config.get('severity'))
-
+    # get MISP settings stored in inputs.conf
+    config_args['thehive_url'] = thehiveconf['thehive_url']
+    helper.log_info("config_args['thehive_url'] {}".format(config_args['thehive_url']))
+    if int(thehiveconf['thehive_verifycert']) == 1:
+        config_args['thehive_verifycert'] = True
+    else:
+        config_args['thehive_verifycert'] = False
+    helper.log_info("config_args['thehive_verifycert'] {}".format(config_args['thehive_verifycert']))
+    # get client cert parameters
+    if int(thehiveconf['client_use_cert']) == 1:
+        config_args['client_cert_full_path'] = thehiveconf['client_cert_full_path']
+    else:
+        config_args['client_cert_full_path'] = None
+    helper.log_info("config_args['client_cert_full_path'] {}".format(config_args['client_cert_full_path']))
+    # get proxy parameters if any
+    config_args['proxies'] = dict()
+    if int(thehiveconf['thehive_use_proxy']) == 1:
+        proxy = helper.get_proxy()
+        if proxy:
+            proxy_url = '://'
+            if proxy['proxy_username'] is not '':
+                proxy_url = proxy_url + proxy['proxy_username'] + ':' + proxy['proxy_password'] + '@' 
+            proxy_url = proxy_url + proxy['proxy_url'] + ':' + proxy['proxy_port'] + '/'
+            config_args['proxies'] = {
+                "http":  "http"  + proxy_url,
+                "https": "https" + proxy_url
+            }
     # Get string values from alert form
-    myTemplate = config.get('caseTemplate')
+    myTemplate = helper.get_param("th_case_template")
     if myTemplate in [None, '']:
         config_args['caseTemplate'] = "default"
     else:
         config_args['caseTemplate'] = myTemplate
-    myType = config.get('type')
+    myType = helper.get_param("th_type")
     if myType in [None, '']:
         config_args['type'] = "alert"
     else:
         config_args['type'] = myType
-    mySource =  config.get('source')
+    mySource =  helper.get_param("th_source")
     if mySource in [None, '']:
         config_args['source'] = "splunk"
     else:
         config_args['source'] = mySource
-    if not config.get('unique'): 
+    if not helper.get_param("th_unique_id"): 
         config_args['unique'] = "oneEvent"
     else:
-        config_args['unique'] = config.get('unique')
-    if not config.get('title'):
+        config_args['unique'] = helper.get_param("th_unique_id")
+    if not helper.get_param("th_title"):
         config_args['title'] = "notable event"
     else:
-        config_args['title'] = config.get('title')
-    myDescription = config.get('description')
+        config_args['title'] = helper.get_param("th_title")
+    myDescription = helper.get_param("th_description")
     if myDescription in [None, '']:
         config_args['description'] = "No description provided."
     else:
         config_args['description'] =  myDescription
-    myTags = config.get('tags')
+    myTags = helper.get_param("th_tags")
     if myTags in [None, '']:
         config_args['tags'] = []
     else:
@@ -156,10 +147,15 @@ def prepare_config(config, filename):
             if tag not in tags:
                 tags.append(tag)
         config_args['tags'] = tags
-    
 
+    # Get numeric values from alert form
+    config_args['severity']= int(helper.get_param("th_severity"))
+    config_args['tlp']= int(helper.get_param("th_tlp"))
+    config_args['pap']= int(helper.get_param("th_pap"))
+    
     # add filename of the file containing the result of the search
-    config_args['filename'] = filename
+    config_args['filename'] = str(helper.settings['results_file'])
+
     return config_args
 
 
@@ -399,51 +395,32 @@ def process_event(helper, *args, **kwargs):
     helper.log_info("server_uri={}".format(helper.settings["server_uri"]))
     [sample_code_macro:end]
     """
-
+    helper.set_log_level(helper.log_level)
     helper.log_info("Alert action create_alert_entry_in_thehive started.")
 
     # TODO: Implement your alert action logic here
-    logging.root
-    logging.root.setLevel(logging.ERROR)    
-    # make sure we have the right number of arguments - more than 1; and first argument is "--execute"
-    if len(sys.argv) > 1 and sys.argv[1] == "--execute":
-        # read the payload from stdin as a json string
-        payload = json.loads(sys.stdin.read())
-        # extract the file path and alert config from the payload
-        configuration = payload.get('configuration')
-        filename = payload.get('results_file')
-        # test if the results file exists - this should basically never fail unless we are parsing configuration incorrectly
-        # example path this variable should hold: '/opt/splunk/var/run/splunk/12938718293123.121/results.csv.gz'
-        if os.path.exists(filename):
-            # file exists - try to open it; fail gracefully
-            try:
-                # open the file with gzip lib, start making alerts
-                # can with statements fail gracefully??
-                with gzip.open(filename) as file:
-                    # DictReader lets us grab the first row as a header row and other lines will read as a dict mapping the header to the value
-                    # instead of reading the first line with a regular csv reader and zipping the dict manually later
-                    # at least, in theory
-                    Reader = csv.DictReader(file)
-                    logging.debug('Reader is %s', str(Reader))
-                    logging.debug("Creating alert with config %s", json.dumps(configuration))
-                    Config = prepare_config(configuration,filename)
-                    logging.debug('Config is %s', json.dumps(Config))
-                    # make the alert with predefined function; fail gracefully
-                    create_alert(Config, Reader)
-                # by this point - all alerts should have been created with all necessary observables attached to each one
-                # we can gracefully exit now
-                sys.exit(0)
-            # something went wrong with opening the results file
-            except IOError as e:
-                logging.error("FATAL Results file exists but could not be opened/read")
-                sys.exit(3)
-        # somehow the results file does not exist
-        else:
-            logging.error("FATAL Results file does not exist")
-            sys.exit(2)
-    # somehow we received the wrong number of arguments
-    else:
-        logging.error("FATAL Unsupported execution mode (expected --execute flag)")
-        sys.exit(1)
+    Config = prepare_alert_config(helper)
+    helper.log_info("Config dict is ready to use")    
+   
+    filename = Config['filename']
+    # test if the results file exists - this should basically never fail unless we are parsing configuration incorrectly
+    # example path this variable should hold: '/opt/splunk/var/run/splunk/12938718293123.121/results.csv.gz'
+    if os.path.exists(filename):
+        # file exists - try to open it; fail gracefully
+        try:
+            # open the file with gzip lib, start making alerts
+            # can with statements fail gracefully??
+            with gzip.open(filename, 'rt') as file:
+                # DictReader lets us grab the first row as a header row and other lines will read as a dict mapping the header to the value
+                # instead of reading the first line with a regular csv reader and zipping the dict manually later
+                # at least, in theory
+                Reader = csv.DictReader(file)
+                helper.log_debug("Reader is {}".format(Reader))
+                # make the alert with predefined function; fail gracefully
+                create_alert(Config, Reader)
+        # something went wrong with opening the results file
+        except IOError as e:
+            helper.log_error("FATAL Results file exists but could not be opened/read")
+            return 2
 
     return 0
