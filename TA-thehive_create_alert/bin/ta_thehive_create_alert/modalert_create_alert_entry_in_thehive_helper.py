@@ -28,6 +28,7 @@
 # http://docs.splunk.com/Documentation/Splunk/6.5.3/AdvancedDev/ModAlertsAdvancedExample
 
 import csv
+import datetime
 import gzip
 import json
 import os
@@ -35,8 +36,7 @@ import requests
 import sys
 import time
 from splunk.clilib import cli_common as cli
-#from requests.auth import HTTPBasicAuth
-import logging
+import splunklib.client as client
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
@@ -166,7 +166,7 @@ def create_alert(config, results):
     # https://github.com/TheHive-Project/TheHiveDocs/tree/master/api
     dataType = []
     _SPLUNK_PATH = os.environ['SPLUNK_HOME']
-    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep + 'thehive_datatypes.csv'
+    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups' + os.sep + 'thehive_datatypes.csv'
     try:
         with open(thehive_datatypes, 'rb') as file_object:  # open thehive_datatypes.csv if exists and load content.
             csv_reader = csv.DictReader(file_object)
@@ -174,7 +174,7 @@ def create_alert(config, results):
                 if 'observable' in row:
                     dataType.append(row['observable'])
     except IOError : # file thehive_instances.csv not readable
-        logging.info('file thehive_datatypes.csv not readable')
+        helper.log_info('file thehive_datatypes.csv not readable')
     if not dataType:
         dataType = ['autonomous-system', 'domain', 'filename', 'fqdn', 'hash', 'ip', 'mail', 'mail_subject', 'other', 'regexp', 'registry', 'uri_path', 'url', 'user-agent']
     alerts = {}
@@ -240,7 +240,7 @@ def create_alert(config, results):
                     cKey='other'
                     cMsg=artifactMessage + ' - type: ' + str(key)                   
                 if '\n' in value: # was a multivalue field
-                    logging.debug('value is not a simple string %s', value)
+                    helper.log_debug('value is not a simple string {} '.format(value))
                     values = value.split('\n')
                     for val in values:
                         if val != "":
@@ -249,7 +249,7 @@ def create_alert(config, results):
                             data=str(val),
                             message=cMsg
                             )
-                            logging.debug("new artifact is %s " % artifact)
+                            helper.log_debug("new artifact is {} ".format(artifact))
                             if artifact not in artifacts: 
                                 artifacts.append(artifact)
                 else:
@@ -258,7 +258,7 @@ def create_alert(config, results):
                     data=str(value),
                     message=cMsg
                     )
-                    logging.debug("new artifact is %s " % artifact)
+                    helper.log_debug("new artifact is {} ".format(artifact))
                     if artifact not in artifacts: 
                         artifacts.append(artifact)
     
@@ -270,7 +270,8 @@ def create_alert(config, results):
     try:
         # iterate in dict alerts to create alerts
         for srcRef, artifact_list in alerts.items():
-            logging.debug("SourceRef is %s and attributes are %s" % (srcRef,  artifact_list))
+            helper.log_debug("SourceRef is {} ".format(srcRef))
+            helper.log_debug("Attributes are {}".format(artifact_list))
 
             payload = json.dumps(dict(
                 title = title[srcRef],
@@ -295,19 +296,19 @@ def create_alert(config, results):
             headers['Authorization'] = 'Bearer ' + auth
             headers['Accept'] = 'application/json'
 
-            logging.debug('DEBUG Calling url="%s" with headers %s', url, headers) 
-            logging.debug('DEBUG payload=%s', payload) 
+            helper.log_debug('DEBUG Calling url="{}"'.format(url)) 
+            helper.log_debug('DEBUG payload={}'.format(payload)) 
             # post alert
             response = requests.post(url, headers=headers, data=payload, verify=False, cert=client_cert, proxies=config['proxies'])
-            logging.info("INFO theHive server responded with HTTP status %s", response.status_code)
+            helper.log_info("INFO theHive server responded with HTTP status {}".format(response.status_code))
             # check if status is anything other than 200; throw an exception if it is
             response.raise_for_status()
             # response is 200 by this point or we would have thrown an exception
-            logging.debug("theHive server response: %s", response.json())
+            helper.log_info("theHive server response is 200")
     
     # somehow we got a bad response code from thehive
     except requests.exceptions.HTTPError as e:
-        logging.error("theHive server returned following error: %s", e) 
+        helper.log_error("theHive server returned following error: {}".format(e)) 
         
 def process_event(helper, *args, **kwargs):
     """
