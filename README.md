@@ -4,16 +4,23 @@ This add-on is designed to add alert action on Splunk to create alerts in [The H
 # Installation
 This app is designed to run on Splunk Search Head(s) on Linux plateforms
 1. Download this [file](TA-thehive.tar.gz) which is the Splunk TA ( it is an archive containing the sub-directory TA-thehive)
-3. Install the app on your Splunk Search Head(s): "Manage Apps" -> "Install app from file"
-4. A custom endpoint has been defined so you need to restart Splunk (for later updates, you may skip this step)
-5. At next logon, you should be invited to configure the app (if not go to Manage Apps > TA-thehive > Set up) 
-    - provide the url to the API of your instance;
-    - provide the authkey.
-    - check the box to verify cert
-    - check the box to use a proxy
-    - (optional) provide proxy settings
-6. the configuration is saved in local/thehive.conf and in one row of **lookups/thehive_instances.csv**
-7. lookups/thehive_instances.csv can be edited to add other TheHive instances. You can select them in the alert configuration form by providing the instance name.
+2. Install the app on your Splunk Search Head(s): "Manage Apps" -> "Install app from file"
+3. Restart Splunk (for later updates, you may skip this step)
+4. At next logon, launch the app (Manage Apps > TA-thehive > launch app)
+5. create at least one input for example "default_th". Please note that mandatory fields "intervals" and "index" are not used. Just put a valid value in those ones.
+    - provide a name
+    - for intervals you may put 8640000 (100 days) or any other value
+    - provide the url to your TH instance, ( /api/alert will be added to it to reach the endpoint)
+    - provide the authkey,
+    - check (or not) the certificate of the TheHive server,
+    - use (or not) the proxy for this instance,
+    - provide client certificate if required (and check the box to use it)
+6. Parameters are saved under TA-thehive_create_alert/local/inputs.conf
+7. Important: Role(s)/user(s) using this app must have the capability to "list_storage_passwords" (as API KEYs and proxy password(s) are safely stored encrypted )
+8. In addition, a CSV file is saved under **lookups/thehive_datatypes_v2.csv**. It contains a mapping between field names and datatypes
+	- standard datatypes are included at first configuration of the app
+	- then you can defined additional field (from datamodel) mapping to datatype e.g. on Splunk field _src_ (from datamodel Web) can be mapped to datatype _ip_, _dest_ to _domain_ etc. (in versions 1.x, filed name had to match datatypes)
+9. This lookup can be edited to add custom datatypes in the same way.
 
 # Use Cases
 
