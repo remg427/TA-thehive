@@ -29,9 +29,9 @@ def validate_input(helper, definition):
 
     # if it does not exist, create thehive_observables.csv
     _SPLUNK_PATH = os.environ['SPLUNK_HOME']
-    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
-        + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups' + os.sep \
-        + 'thehive_datatypes_v2.csv'
+    directory = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
+        + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups'
+    thehive_datatypes = directory + os.sep + 'thehive_datatypes_v2.csv'
     if not os.path.exists(thehive_datatypes):
         # file thehive_datatypes_v2.csv doesn't exist. Create the file
         observables = [['field_name', 'datatype', 'regex', 'description'],
@@ -51,7 +51,8 @@ def validate_input(helper, definition):
                        ['user-agent', 'user-agent', '', '']
                        ]
         try:
-            # open thehive_instances.csv if exists and load content.
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             with open(thehive_datatypes, 'wb') as file_object:
                 csv_writer = csv.writer(file_object, delimiter=',')
                 for observable in observables:
