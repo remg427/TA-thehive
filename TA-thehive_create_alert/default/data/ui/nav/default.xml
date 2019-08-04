@@ -1,0 +1,6 @@
+<nav search_view="search" color="#ffde63">
+<view name="inputs" default="true" />
+<view name="configuration"/>
+<view name="alerts" />
+<view name="search" label="Search"/>
+</nav>

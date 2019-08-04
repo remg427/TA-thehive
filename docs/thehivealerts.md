@@ -2,7 +2,8 @@
 When you create a Splunk alert, you may add an alert action to create alerts in TheHive
 ## collect results in Splunk
 ### basic search results with a column by artifact type
-you may build a search returning some values for these fields
+you may build a search returning some values with fields that are mapped (in lookup/thehive_datatypes_v2.csv) to following default datatypes.
+By default, the lookup contains a mapping for thehive datatypes
 
     autonomous-system
     domain
@@ -45,6 +46,7 @@ You can try the following dummy search to illustrate this behaviour.
 Fill in fields. If value is not provided, default will be provided if needed.
 
 * Alert overall description
+    - TheHive instance: one of the instances defined in inputs.conf
     - Case Template: The case template to use for imported alerts.
     - Type: The alert type. Defaults to "alert".
     - Source: The alert source. Defaults to "splunk".
@@ -54,4 +56,4 @@ Fill in fields. If value is not provided, default will be provided if needed.
     - Tags: Use single comma-separated string without quotes for multiple tags (ex. "badIP,spam").
     - Severity: Change the severity of the created alert.
     - TLP: Change the TLP of the created alert. Default is TLP:AMBER
-* TheHive alternate instance (optional if they have been defined in general setup) from file lookups/thehive_instances.csv
+    - PAP: Change the PAP of the created alert. Default is PAP:AMBER

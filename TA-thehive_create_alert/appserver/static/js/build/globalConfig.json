@@ -1,0 +1,353 @@
+{
+    "meta": {
+        "name": "TA-thehive_create_alert", 
+        "restRoot": "TA_thehive_create_alert", 
+        "displayName": "thehive_create_alert", 
+        "version": "1.1.0", 
+        "apiVersion": "3.0.0"
+    }, 
+    "pages": {
+        "configuration": {
+            "title": "Configuration", 
+            "description": "Set up your add-on", 
+            "tabs": [
+                {
+                    "options": {
+                        "saveValidator": "function(formData) { if(!formData.proxy_enabled || formData.proxy_enabled === '0') {return true; } if(!formData.proxy_url) { return 'Proxy Host can not be empty'; } if(!formData.proxy_port) { return 'Proxy Port can not be empty'; } return true; }"
+                    }, 
+                    "name": "proxy", 
+                    "entity": [
+                        {
+                            "field": "proxy_enabled", 
+                            "label": "Enable", 
+                            "type": "checkbox"
+                        }, 
+                        {
+                            "options": {
+                                "disableSearch": true, 
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "http", 
+                                        "value": "http"
+                                    }, 
+                                    {
+                                        "label": "socks4", 
+                                        "value": "socks4"
+                                    }, 
+                                    {
+                                        "label": "socks5", 
+                                        "value": "socks5"
+                                    }
+                                ]
+                            }, 
+                            "field": "proxy_type", 
+                            "defaultValue": "http", 
+                            "label": "Proxy Type", 
+                            "type": "singleSelect"
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max host length is 4096", 
+                                    "maxLength": 4096, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "field": "proxy_url", 
+                            "label": "Host", 
+                            "type": "text"
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "range": [
+                                        1, 
+                                        65535
+                                    ], 
+                                    "type": "number"
+                                }
+                            ], 
+                            "field": "proxy_port", 
+                            "label": "Port", 
+                            "type": "text"
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of username is 50", 
+                                    "maxLength": 50, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "field": "proxy_username", 
+                            "label": "Username", 
+                            "type": "text"
+                        }, 
+                        {
+                            "encrypted": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of password is 8192", 
+                                    "maxLength": 8192, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "field": "proxy_password", 
+                            "label": "Password", 
+                            "type": "text"
+                        }, 
+                        {
+                            "field": "proxy_rdns", 
+                            "label": "Remote DNS resolution", 
+                            "type": "checkbox"
+                        }
+                    ], 
+                    "title": "Proxy"
+                }, 
+                {
+                    "name": "logging", 
+                    "entity": [
+                        {
+                            "options": {
+                                "disableSearch": true, 
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "DEBUG", 
+                                        "value": "DEBUG"
+                                    }, 
+                                    {
+                                        "label": "INFO", 
+                                        "value": "INFO"
+                                    }, 
+                                    {
+                                        "label": "WARNING", 
+                                        "value": "WARNING"
+                                    }, 
+                                    {
+                                        "label": "ERROR", 
+                                        "value": "ERROR"
+                                    }, 
+                                    {
+                                        "label": "CRITICAL", 
+                                        "value": "CRITICAL"
+                                    }
+                                ]
+                            }, 
+                            "field": "loglevel", 
+                            "defaultValue": "INFO", 
+                            "label": "Log level", 
+                            "type": "singleSelect"
+                        }
+                    ], 
+                    "title": "Logging"
+                }
+            ]
+        }, 
+        "inputs": {
+            "table": {
+                "moreInfo": [
+                    {
+                        "field": "name", 
+                        "label": "Name"
+                    }, 
+                    {
+                        "field": "interval", 
+                        "label": "Interval"
+                    }, 
+                    {
+                        "field": "index", 
+                        "label": "Index"
+                    }, 
+                    {
+                        "field": "disabled", 
+                        "label": "Status"
+                    }, 
+                    {
+                        "field": "thehive_url", 
+                        "label": "TheHive API url"
+                    }, 
+                    {
+                        "field": "thehive_key", 
+                        "label": "API auth key"
+                    }, 
+                    {
+                        "field": "thehive_verifycert", 
+                        "label": "Check TLS certificate?"
+                    }, 
+                    {
+                        "field": "thehive_use_proxy", 
+                        "label": "Use proxy?"
+                    }, 
+                    {
+                        "field": "client_use_cert", 
+                        "label": "Use client cert"
+                    }, 
+                    {
+                        "field": "client_cert_full_path", 
+                        "label": "client certificate file"
+                    }
+                ], 
+                "header": [
+                    {
+                        "field": "name", 
+                        "label": "Name"
+                    }, 
+                    {
+                        "field": "interval", 
+                        "label": "Interval"
+                    }, 
+                    {
+                        "field": "index", 
+                        "label": "Index"
+                    }, 
+                    {
+                        "field": "disabled", 
+                        "label": "Status"
+                    }
+                ], 
+                "actions": [
+                    "edit", 
+                    "enable", 
+                    "delete", 
+                    "clone"
+                ]
+            }, 
+            "title": "Inputs", 
+            "services": [
+                {
+                    "name": "connector_to_thehive_instance", 
+                    "entity": [
+                        {
+                            "validators": [
+                                {
+                                    "pattern": "^[a-zA-Z]\\w*$", 
+                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores.", 
+                                    "type": "regex"
+                                }, 
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of input name should be between 1 and 100", 
+                                    "maxLength": 100, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "label": "Name", 
+                            "help": "Enter a unique name for the data input", 
+                            "type": "text", 
+                            "field": "name", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$", 
+                                    "errorMsg": "Interval must be an integer.", 
+                                    "type": "regex"
+                                }
+                            ], 
+                            "label": "Interval", 
+                            "help": "Time interval of input in seconds.", 
+                            "type": "text", 
+                            "field": "interval", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of index name should be between 1 and 80.", 
+                                    "maxLength": 80, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "options": {
+                                "endpointUrl": "data/indexes", 
+                                "blackList": "^_.*$", 
+                                "createSearchChoice": true
+                            }, 
+                            "defaultValue": "default", 
+                            "label": "Index", 
+                            "type": "singleSelect", 
+                            "field": "index", 
+                            "required": true
+                        }, 
+                        {
+                            "label": "TheHive API url", 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "maxLength": 8192, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "defaultValue": "http://hive.example.com/", 
+                            "help": "provide the base URL of your TheHive instance", 
+                            "type": "text", 
+                            "field": "thehive_url", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of password is 8192", 
+                                    "maxLength": 8192, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "label": "API auth key", 
+                            "encrypted": true, 
+                            "defaultValue": "***API*KEY***", 
+                            "help": "API auth key - You should create an account with only the role create alerts", 
+                            "type": "text", 
+                            "field": "thehive_key", 
+                            "required": false
+                        }, 
+                        {
+                            "required": false, 
+                            "field": "thehive_verifycert", 
+                            "help": "Check SSL certificate of TheHive server", 
+                            "label": "Check TLS certificate?", 
+                            "type": "checkbox"
+                        }, 
+                        {
+                            "required": false, 
+                            "field": "thehive_use_proxy", 
+                            "help": "If a proxy is used for this instance, please configure the proxy in configuration pane.", 
+                            "label": "Use proxy?", 
+                            "type": "checkbox"
+                        }, 
+                        {
+                            "required": false, 
+                            "field": "client_use_cert", 
+                            "help": "Use a client certificate to authenticate on default instance", 
+                            "label": "Use client cert", 
+                            "type": "checkbox"
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "maxLength": 8192, 
+                                    "type": "string"
+                                }
+                            ], 
+                            "label": "client certificate file", 
+                            "help": "Provide full path to a client certificate as a single file (containing the private key and the certificate) ", 
+                            "type": "text", 
+                            "field": "client_cert_full_path", 
+                            "required": false
+                        }
+                    ], 
+                    "title": "Connector to Thehive instance"
+                }
+            ], 
+            "description": "Manage your data inputs"
+        }
+    }
+}

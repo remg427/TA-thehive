@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "info": {
+    "title": "thehive_create_alert",
+    "id": {
+      "group": null,
+      "name": "TA-thehive_create_alert",
+      "version": "2.0.0"
+    },
+    "author": [
+      {
+        "name": "remg427@gmail.com",
+        "email": null,
+        "company": null
+      }
+    ],
+    "releaseDate": "2019-08-04",
+    "description": "This add-on is designed to add alert action on Splunk to create alerts in The Hive",
+    "classification": {
+      "intendedAudience": null,
+      "categories": [],
+      "developmentStatus": null
+    },
+    "commonInformationModels": null,
+    "license": {
+      "name": null,
+      "text": null,
+      "uri": null
+    },
+    "privacyPolicy": {
+      "name": null,
+      "text": null,
+      "uri": null
+    },
+    "releaseNotes": {
+      "name": null,
+      "text": null,
+      "uri": null
+    }
+  },
+  "dependencies": {
+  },
+  "tasks": [],
+  "inputGroups": {
+  },
+  "incompatibleApps": {
+  },
+  "platformRequirements": {
+    "splunk": {
+      "Enterprise": "*"
+    }
+  }
+}
