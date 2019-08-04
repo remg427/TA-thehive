@@ -2,7 +2,8 @@
 When you create a Splunk alert, you may add an alert action to create alerts in TheHive
 ## collect results in Splunk
 ### basic search results with a column by artifact type
-you may build a search returning some values for these fields
+you may build a search returning some values with fields that are mapped (in lookup/thehive_datatypes_v2.csv) to following default datatypes.
+By default, the lookup contains a mapping for thehive datatypes
 
     autonomous-system
     domain

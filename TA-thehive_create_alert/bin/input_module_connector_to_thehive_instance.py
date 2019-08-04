@@ -1,11 +1,9 @@
 
 # encoding = utf-8
 
+import csv
 import os
 import re
-import sys
-import time
-import datetime
 
 '''
     IMPORTANT
@@ -28,11 +26,47 @@ def validate_input(helper, definition):
     # thehive_use_proxy = definition.parameters.get('thehive_use_proxy', None)
     # client_use_cert = definition.parameters.get('client_use_cert', None)
     # client_cert_full_path = definition.parameters.get('client_cert_full_path', None)
+
+    # if it does not exist, create thehive_observables.csv
+    _SPLUNK_PATH = os.environ['SPLUNK_HOME']
+    thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
+        + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups' + os.sep \
+        + 'thehive_datatypes_v2.csv'
+    if not os.path.exists(thehive_datatypes):
+        # file thehive_datatypes_v2.csv doesn't exist. Create the file
+        observables = [['field_name', 'datatype', 'regex', 'description'],
+                       ['autonomous-system', 'autonomous-system', '', ''],
+                       ['domain', 'domain', '', ''],
+                       ['filename', 'filename', '', ''],
+                       ['fqdn', 'fqdn', '', ''],
+                       ['hash', 'hash', '', ''],
+                       ['ip', 'ip', '', ''],
+                       ['mail', 'mail', '', ''],
+                       ['mail_subject', 'mail_subject', '', ''],
+                       ['other', 'other', '', ''],
+                       ['regexp', 'regexp', '', ''],
+                       ['registry', 'registry', '', ''],
+                       ['uri_path', 'uri_path', '', ''],
+                       ['url', 'url', '', ''],
+                       ['user-agent', 'user-agent', '', '']
+                       ]
+        try:
+            # open thehive_instances.csv if exists and load content.
+            with open(thehive_datatypes, 'wb') as file_object:
+                csv_writer = csv.writer(file_object, delimiter=',')
+                for observable in observables:
+                    csv_writer.writerow(observable)
+        except IOError:
+            helper.log_error("FATAL {} could not be opened in write \
+                mode".format(thehive_datatypes))
+
     thehive_url = definition.parameters.get('thehive_url', None)
-    match = re.match("^https:\/\/[0-9a-zA-Z\-\.]+(?:\:\d+)?$",thehive_url)
+    match = re.match("^https:\/\/[0-9a-zA-Z\-\.]+(?:\:\d+)?$", thehive_url)
     if match is None:
-        helper.log_error("Invalid URL. Please provide TLS URL without ending / e.g. https://thehive.example.com:8080 ")
-        raise Exception, "Invalid URL: %s. Please provide TLS URL without ending / e.g. https://thehive.example.com:8080 " % thehive_url
+        helper.log_error("Invalid URL. Please provide TLS URL without ending \
+            / e.g. https://thehive.example.com:8080 ")
+        raise Exception, "Invalid URL: %s. Please provide TLS URL without \
+            ending / e.g. https://thehive.example.com:8080 " % thehive_url
     else:
         pass
 
