@@ -3,7 +3,7 @@ This add-on is designed to add alert action on Splunk to create alerts in [The H
 
 # Installation
 This app is designed to run on Splunk Search Head(s) on Linux plateforms
-1. Download this [file](TA-thehive_create_alert.tar.gz) which is the Splunk TA ( it is an archive containing the sub-directory TA-thehive)
+1. Download this [file](TA-thehive_create_alert.tar.gz) which is the Splunk TA ( it is an archive containing the sub-directory TA-thehive_create_alert)
 2. Install the app on your Splunk Search Head(s): "Manage Apps" -> "Install app from file"
 3. Restart Splunk (for later updates, you may skip this step)
 4. At next logon, launch the app (Manage Apps > TA-thehive > launch app)
