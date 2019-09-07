@@ -52,7 +52,7 @@ def prepare_alert_config(helper):
     # get MISP instance parameters
     # open local/inputs.conf
     _SPLUNK_PATH = os.environ['SPLUNK_HOME']
-    app_name = "TA-thehive_create_alert"
+    app_name = "TA-thehive"
     inputs_conf_file = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
         + os.sep + app_name + os.sep + 'local' + os.sep + 'inputs.conf'
     if os.path.exists(inputs_conf_file):
@@ -167,7 +167,7 @@ def create_alert(helper, config, results):
     dataType = {}
     _SPLUNK_PATH = os.environ['SPLUNK_HOME']
     thehive_datatypes = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
-        + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups' + os.sep \
+        + os.sep + 'TA-thehive' + os.sep + 'lookups' + os.sep \
         + 'thehive_datatypes_v2.csv'
     try:
         # open thehive_datatypes.csv if exists and load content.

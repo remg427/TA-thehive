@@ -53,5 +53,5 @@ class AlertActionWorkercreate_alert_entry_in_thehive(ModularAlertBase):
         return status
 
 if __name__ == "__main__":
-    exitcode = AlertActionWorkercreate_alert_entry_in_thehive("TA-thehive_create_alert", "create_alert_entry_in_thehive").run(sys.argv)
+    exitcode = AlertActionWorkercreate_alert_entry_in_thehive("TA-thehive", "create_alert_entry_in_thehive").run(sys.argv)
     sys.exit(exitcode)
