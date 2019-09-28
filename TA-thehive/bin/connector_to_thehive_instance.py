@@ -73,7 +73,7 @@ class ModInputconnector_to_thehive_instance(modinput_wrapper.base_modinput.BaseM
         return scheme
 
     def get_app_name(self):
-        return "TA-thehive_create_alert"
+        return "TA-thehive"
 
     def validate_input(self, definition):
         """validate the input stanza"""

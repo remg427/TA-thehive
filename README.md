@@ -3,7 +3,7 @@ This add-on is designed to add alert action on Splunk to create alerts in [The H
 
 # Installation
 This app is designed to run on Splunk Search Head(s) on Linux plateforms
-1. Download this [file](TA-thehive_create_alert.tar.gz) which is the Splunk TA ( it is an archive containing the sub-directory TA-thehive_create_alert)
+1. Download this [file](TA-thehive.tar.gz) which is the Splunk TA ( it is an archive containing the sub-directory TA-thehive)
 2. Install the app on your Splunk Search Head(s): "Manage Apps" -> "Install app from file"
 3. Restart Splunk (for later updates, you may skip this step)
 4. At next logon, launch the app (Manage Apps > TA-thehive > launch app)
@@ -15,7 +15,7 @@ This app is designed to run on Splunk Search Head(s) on Linux plateforms
     - check (or not) the certificate of the TheHive server,
     - use (or not) the proxy for this instance,
     - provide client certificate if required (and check the box to use it)
-6. Parameters are saved under TA-thehive_create_alert/local/inputs.conf
+6. Parameters are saved under TA-thehive/local/inputs.conf
 7. Important: Role(s)/user(s) using this app must have the capability to "list_storage_passwords" (as API KEYs and proxy password(s) are safely stored encrypted )
 8. In addition, a CSV file is saved under **lookups/thehive_datatypes_v2.csv**. It contains a mapping between field names and datatypes
 	- standard datatypes are included at first configuration of the app

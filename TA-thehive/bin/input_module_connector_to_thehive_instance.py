@@ -30,7 +30,7 @@ def validate_input(helper, definition):
     # if it does not exist, create thehive_observables.csv
     _SPLUNK_PATH = os.environ['SPLUNK_HOME']
     directory = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
-        + os.sep + 'TA-thehive_create_alert' + os.sep + 'lookups'
+        + os.sep + 'TA-thehive' + os.sep + 'lookups'
     thehive_datatypes = directory + os.sep + 'thehive_datatypes_v2.csv'
     if not os.path.exists(thehive_datatypes):
         # file thehive_datatypes_v2.csv doesn't exist. Create the file
