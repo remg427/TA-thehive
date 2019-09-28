@@ -38,7 +38,7 @@ import splunklib.client as client
 
 __author__     = "Remi Seguy"
 __license__    = "LGPLv3"
-__version__    = "2.0.0"
+__version__    = "2.0.1"
 __maintainer__ = "Remi Seguy"
 __email__      = "remg427@gmail.com"
 
@@ -56,15 +56,20 @@ def prepare_alert_config(helper):
     inputs_conf_file = _SPLUNK_PATH + os.sep + 'etc' + os.sep + 'apps' \
         + os.sep + app_name + os.sep + 'local' + os.sep + 'inputs.conf'
     if os.path.exists(inputs_conf_file):
+        helper.log_info("File {} exists".format(stanza_name)) 
         inputsConf = cli.readConfFile(inputs_conf_file)
+        foundStanza = False
         for name, content in inputsConf.items():
             if stanza_name in name:
                 thehiveconf = content
+                foundStanza = True
                 helper.log_info(json.dumps(thehiveconf))
-        if not thehiveconf:
+        if foundStanza is False:
             helper.log_error("local/inputs.conf does not contain settings for stanza: {}".format(stanza_name)) 
+            return None
     else:
-        helper.log_error("local/inputs.conf does not exist. Please configure misp instances first.") 
+        helper.log_error("local/inputs.conf does not exist. Please configure misp instances first.")
+        return None
     # get clear version of thehive_key
     # get session key
     sessionKey = helper.settings['session_key']
@@ -427,28 +432,30 @@ def process_event(helper, *args, **kwargs):
 
     # TODO: Implement your alert action logic here
     Config = prepare_alert_config(helper)
-    helper.log_info("Config dict is ready to use")
-
-    filename = Config['filename']
-    # test if the results file exists
-    # this should basically never fail unless we are parsing configuration incorrectly
-    # example path this variable should hold: '/opt/splunk/var/run/splunk/12938718293123.121/results.csv.gz'
-    if os.path.exists(filename):
-        # file exists - try to open it; fail gracefully
-        try:
-            # open the file with gzip lib, start making alerts
-            # can with statements fail gracefully??
-            with gzip.open(filename, 'rt') as file:
-                # DictReader lets us grab the first row as a header row and other lines will read as a dict mapping the header to the value
-                # instead of reading the first line with a regular csv reader and zipping the dict manually later
-                # at least, in theory
-                Reader = csv.DictReader(file)
-                helper.log_debug("Reader is {}".format(Reader))
-                # make the alert with predefined function; fail gracefully
-                create_alert(helper, Config, Reader)
-        # something went wrong with opening the results file
-        except IOError:
-            helper.log_error("FATAL Results file exists but could not be opened/read")
-            return 2
-
+    if Config is None:
+        helper.log_error("FATAL Config dict not initialised")
+        return 1
+    else:
+        helper.log_info("Config dict is ready to use")
+        filename = Config['filename']
+        # test if the results file exists
+        # this should basically never fail unless we are parsing configuration incorrectly
+        # example path this variable should hold: '/opt/splunk/var/run/splunk/12938718293123.121/results.csv.gz'
+        if os.path.exists(filename):
+            # file exists - try to open it; fail gracefully
+            try:
+                # open the file with gzip lib, start making alerts
+                # can with statements fail gracefully??
+                with gzip.open(filename, 'rt') as file:
+                    # DictReader lets us grab the first row as a header row and other lines will read as a dict mapping the header to the value
+                    # instead of reading the first line with a regular csv reader and zipping the dict manually later
+                    # at least, in theory
+                    Reader = csv.DictReader(file)
+                    helper.log_debug("Reader is {}".format(Reader))
+                    # make the alert with predefined function; fail gracefully
+                    create_alert(helper, Config, Reader)
+            # something went wrong with opening the results file
+            except IOError:
+                helper.log_error("FATAL Results file exists but could not be opened/read")
+                return 2
     return 0
