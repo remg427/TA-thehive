@@ -14,7 +14,7 @@
         "company": null
       }
     ],
-    "releaseDate": "2019-08-04",
+    "releaseDate": "2019-09-28",
     "description": "This add-on is designed to add alert action on Splunk to create alerts in The Hive",
     "classification": {
       "intendedAudience": null,
